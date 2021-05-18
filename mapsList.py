@@ -2,6 +2,16 @@ import numpy as np
 
 
 def logistic(x, r):
+    """
+    Parameters
+    ----------
+    x
+    r
+
+    Returns
+    -------
+
+    """
     return r * x * (1 - x)
 
 

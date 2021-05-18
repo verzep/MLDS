@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.integrate as spi
 
-import systems_list
+import systemsList
 
 
 class DynSys:
@@ -28,33 +28,33 @@ class DynSys:
 
 # -------------------------------------------
 class Lorenz(DynSys):
-    def __init__(self, param):
-        super(Lorenz, self).__init__(f=systems_list.lorenz, dimension=3, param=param, name="Lorenz")
+    def __init__(self, param = (10,8/3,28)):
+        super(Lorenz, self).__init__(f=systemsList.lorenz, dimension=3, param=param, name="Lorenz")
 
 
 # -----------------------------------------
 
 class Rossler(DynSys):
-    def __init__(self, param):
-        super(Rossler, self).__init__(f=systems_list.rossler, dimension=3, param=param, name="Rossler")
+    def __init__(self, param = (0.1,0.1, 14)):
+        super(Rossler, self).__init__(f=systemsList.rossler, dimension=3, param=param, name="Rossler")
 
 
 # ---------------------------------------
 
 class VanDerPol(DynSys):
-    def __init__(self, param):
-        super(VanDerPol, self).__init__(f=systems_list.vanderpol, dimension=2, param=param,
+    def __init__(self, param = (8.53, 1.2, 2 * 3.1415 / 10)):
+        super(VanDerPol, self).__init__(f=systemsList.vanderpol, dimension=2, param=param,
                                         name="Van der Pol")
 
 
 # -----------------------------------------
 class LotkaVolterra(DynSys):
-    def __init__(self, param):
-        super(LotkaVolterra, self).__init__(f=systems_list.lotkavolterra, dimension=2, param=param,
+    def __init__(self, param= (1.5,1,3,1)):
+        super(LotkaVolterra, self).__init__(f=systemsList.lotkavolterra, dimension=2, param=param,
                                             name="Lotka-Volterra")
 
 
 # --------------------------
 class SIR(DynSys):
-    def __init__(self, param):
-        super(SIR, self).__init__(f=systems_list.SIR, dimension=2, param=param, name="SIR")
+    def __init__(self, param=(1.5,1)):
+        super(SIR, self).__init__(f=systemsList.SIR, dimension=2, param=param, name="SIR")

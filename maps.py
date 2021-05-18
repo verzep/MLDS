@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import maps_list
+import mapsList
 
 
 class Map:
@@ -130,7 +130,7 @@ class Logistic(Map):
         r : float, default = 3.5
             the value of the parameter r of the map.
         '''
-        super().__init__(maps_list.logistic, 1, r, "Logistic")
+        super().__init__(mapsList.logistic, 1, r, "Logistic")
 
 
 # -----------------------------------------------------------
@@ -142,7 +142,7 @@ class Tent(Map):
         r : float, default = 2
             the value of the parameter r of the map.
         '''
-        super().__init__(maps_list.tent, 1, r, "Tent")
+        super().__init__(mapsList.tent, 1, r, "Tent")
 
 
 # ---------------------------------------------------------------
@@ -156,7 +156,7 @@ class Shift(Map):
         r: float, default = 1
             the value of the parameter r of the map.
         '''
-        super().__init__(maps_list.shift, 1, r, "Shift")
+        super().__init__(mapsList.shift, 1, r, "Shift")
 
 
 # -------------------------------------------------
@@ -171,4 +171,4 @@ class Quadratic(Map):
         r: float, default = 2
             the value of the parameter r of the map.
         '''
-        super().__init__(maps_list.quadratic, 1, r, "Quadratic")
+        super().__init__(mapsList.quadratic, 1, r, "Quadratic")

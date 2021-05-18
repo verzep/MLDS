@@ -1,3 +1,4 @@
+import numpy
 import numpy as np
 
 from copy import copy
@@ -11,6 +12,7 @@ class RCN:
                  , spectral_radius=0.95
                  , input_scaling=1
                  , bias=0
+                 , constant_bias=True
                  , sparsity=0
                  , leak_rate=1
                  , noise=0
@@ -63,6 +65,7 @@ class RCN:
             Selects the type of readout the network use:
             - "linear"
             - "augmented"
+            - "square"
         optimization: string, default = "ridge"
             Selects the optimization used to feat the readout.
             - "ridge"
@@ -86,7 +89,13 @@ class RCN:
         self.n_outputs = n_outputs
         self.spectral_radius = spectral_radius
         self.input_scaling = input_scaling
-        self.bias = bias
+        self.constant_bias = constant_bias
+
+        if constant_bias:
+            self.bias = bias
+        else:
+            self.bias = ((np.random.rand(self.n_reservoir) * 2) - 1) * bias
+
         self.leak_rate = leak_rate
         self.sparsity = sparsity
         self.noise = noise
@@ -117,8 +126,8 @@ class RCN:
             'Possible values: {"normal", "wigner", "ring", "delay_line"} \'.'
         self.reservoir_type = reservoir_type
 
-        assert read_out_type in {"linear", "augmented"}, \
-            'Possible values: {"linear", "augmented"} \'.'
+        assert read_out_type in {"linear", "augmented", "square"}, \
+            'Possible values: {"linear", "augmented", "square"} \'.'
         self.read_out_type = read_out_type
 
         self._create_net()
@@ -198,10 +207,10 @@ class RCN:
         return self.fit(outputs)
 
     def listen(self, inputs):
-        T_train = len(inputs[0])
-        if inputs.ndim < 2:
-            inputs = np.reshape(inputs, (-1, T_train))
 
+        if inputs.ndim < 2:
+            inputs = np.reshape(inputs, (-1, inputs.shape[0]))
+        T_train = len(inputs[0])
         # generate the entire sequence of states
         states = np.zeros((self.n_reservoir, T_train + 1))
         for t in range(T_train):
@@ -245,6 +254,21 @@ class RCN:
             self.W_out = (second @ first).T  # transpose is needed now to obtain the correct W
             # define the readout function
             self.read_out = lambda x: self.W_out.dot(self._augment_state(x))
+
+        if self.read_out_type == "square" and self.optimization == "ridge":
+            # use the transpose as the most common form is Ax = b
+            # while we have WR=Y
+
+            R_sq = self._square_state(self.states[:, self.transient:])
+            A = R_sq.T
+            b = outputs[:, self.transient:].T
+
+            # compute the two terms
+            first = A.T @ b
+            second = np.linalg.pinv(A.T @ A + self.regularization * np.identity(A.shape[1]))
+            self.W_out = (second @ first).T  # transpose is needed now to obtain the correct W
+            # define the readout function
+            self.read_out = lambda x: self.W_out.dot(self._square_state(x))
 
         self.last_output = outputs[:, -1]
 
@@ -297,8 +321,31 @@ class RCN:
             R = R.reshape(-1, 1)
 
         R_aug = copy(R)
-        R_aug[:, ::2] = R_aug[:, ::2] ** 2
+        R_aug[::2, :] = R_aug[::2, :] ** 2
         return R_aug
+
+    def _square_state(self, R):
+        """
+        Parameters
+        ----------
+        R
+
+        Returns
+        -------
+
+        """
+        if R.ndim < 2:
+            R = R.reshape(-1, 1)
+
+        R_sq = np.vstack((copy(R), R ** 2))
+
+        return R_sq
+
+    def get_augmented_states(self):
+        return self._augment_state(self.states)
+
+    def get_square_states(self):
+        return self._square_state(self.states)
 
 
 class AutonomousRCN(RCN):
@@ -308,6 +355,7 @@ class AutonomousRCN(RCN):
                  , spectral_radius=0.95
                  , input_scaling=1
                  , bias=0
+                 , constant_bias=True
                  , sparsity=0
                  , leak_rate=1
                  , noise=0
@@ -322,12 +370,40 @@ class AutonomousRCN(RCN):
                  , transient=100
                  , random_state=None
                  ):
+        """
+
+        Parameters
+        ----------
+        n_reservoir
+        n_inputs
+        spectral_radius
+        input_scaling
+        bias
+        constant_bias
+        sparsity
+        leak_rate
+        noise
+        reservoir_type
+        activation
+        read_out_type
+        optimization
+        training_type
+        regularization
+        force_sr
+        distribute_input
+        transient
+        random_state
+        """
+
+
+
         super(AutonomousRCN, self).__init__(n_reservoir=n_reservoir
                                             , n_inputs=n_inputs
                                             , n_outputs=0
                                             , spectral_radius=spectral_radius
                                             , input_scaling=input_scaling
                                             , bias=bias
+                                            , constant_bias=constant_bias
                                             , sparsity=sparsity
                                             , leak_rate=leak_rate
                                             , noise=noise
@@ -344,15 +420,21 @@ class AutonomousRCN(RCN):
 
         self.training_type = training_type
 
-    def train(self, inputs, outputs):
+    def train(self, inputs:numpy.array):
+        """
+        Parameters
+        ----------
+        inputs
+        """
+        if inputs.ndim < 2:
+            inputs = np.reshape(inputs, (-1, inputs.shape[0]))
 
         if self.training_type == "off_line":
-            self.listen(inputs[:, :-1])
-            return self.fit(inputs[:, 1])
+            self.listen(inputs[:, :])
+            return self.fit(inputs[:, :])
 
     def predict(self, n_steps, continuation=True):
         """
-
         Parameters
         ----------
         n_steps

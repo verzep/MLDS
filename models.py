@@ -115,12 +115,20 @@ class RCN:
         else:
             self.random_state_ = np.random.mtrand._rand
 
-        assert activation in {"tanh", "linear"}, "Possible values: {'tanh', 'linear} \'."
+        assert activation in {"tanh", "linear", "relu", "sin"}, "Possible values: {'tanh', 'linear', 'relu', 'sin'} \'."
         if activation == "tanh":
             self.activation = np.tanh
 
         elif activation == "linear":
             self.activation = lambda x: x
+
+        elif activation == "relu":
+            self.activation = lambda x: x * (x > 0)
+
+        elif activation == "sin":
+            self.activation = np.sin
+
+
 
         assert reservoir_type in {"normal", "wigner", "ring", "delay_line"}, \
             'Possible values: {"normal", "wigner", "ring", "delay_line"} \'.'
